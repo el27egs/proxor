@@ -172,7 +172,10 @@ public class SpreadSheet extends JFrame {
     // value is marked as undefined.
     public void evaluate(int r, int c, int depth) {
         String formula = cells[r][c].formula;
-        if (formula.length() > 0 && formula.charAt(0) == '=') {
+        if (formula.length() > 0 && formula.charAt(0) == '=') {        	
+        	if (formula.startsWith("=SUM")) {
+        		formula = parseSumFormula(formula);
+        	}
             try {
                 if (depth <= maxRows * maxCols) {
                     StringTokenizer tokens = 
@@ -199,7 +202,82 @@ public class SpreadSheet extends JFrame {
     }
     
     
-    // evaluate every cell in the spreadsheet
+    private String parseSumFormula(String sumFormula) {
+          	
+    	if (sumFormula.indexOf(":") == -1) {
+    		return "";
+    	}
+    	
+    	StringBuffer buffer = new StringBuffer("=");
+    	
+    	sumFormula = sumFormula.substring("=SUM(".length(), sumFormula.length() - ")".length());
+    	String[] cells = sumFormula.split(":");
+    	
+    	String firstColumn = cells[0].substring(0, 1); 
+    	String secondColumn = cells[1].substring(0, 1);
+
+    	String firstRow = cells[0].substring(1); 
+    	String secondRow = cells[1].substring(1);
+
+    	if ( firstColumn.equals(secondColumn) ){
+    	
+    		if (firstRow.equals(secondRow)) {
+    			return buffer.append(firstColumn).append(firstRow).toString();
+    		}
+    		
+    		int init = Integer.parseInt(firstRow);
+    		int end = Integer.parseInt(secondRow);
+    		
+    	
+    		if (init > end ) {
+    			int tmp = init;
+    			init = end;
+    			end = tmp;
+    		}
+    		    		
+    		for (int row = init; row <= end; row++) {
+    			buffer.append(firstColumn).append(row);
+    			
+    			if (row < end) {
+    				buffer.append("+");
+    			}
+    		}
+    		
+    		return buffer.toString();
+    		
+    	}else if ( firstRow.equals(secondRow) ){
+    	
+    		if (firstColumn.equals(secondColumn)) {
+    			return buffer.append(firstColumn).append(firstRow).toString();
+    		}
+
+    		int init = (char) (firstColumn.charAt(0));
+    		int end = (char) (secondColumn.charAt(0));
+
+    		if (init > end ) {
+    			int tmp = init;
+    			init = end;
+    			end = tmp;
+    		}
+    		
+    		for (int column = init; column <= end; column++) {
+    			buffer.append((char)column).append(firstRow);
+    			
+    			if (column < end) {
+    				buffer.append("+");
+    			}
+    		}
+    		
+    		return buffer.toString();
+
+    	}else {
+    		System.out.println("Error de rangos...");
+    	}
+    		
+		return "";
+	}
+
+	// evaluate every cell in the spreadsheet
     public void evaluate() {
         // do not copy text fields generated from formulas
         // back to the formula strings

@@ -177,7 +177,6 @@ public class SpreadSheet extends JFrame {
     // value is marked as undefined.
     public void evaluate(int r, int c, int depth) {
         String formula = cells[r][c].formula;
-        System.out.println("["+r+"]["+c+"] = " + formula);
         if (formula.length() > 0 && formula.charAt(0) == '=') {
             try {
                 if (depth <= maxRows * maxCols) {
@@ -188,7 +187,6 @@ public class SpreadSheet extends JFrame {
                         String val = parseFormula(tokens, depth);
                         if (val != null) {
                             cellsTF[r][c].setText(formatNumber(val));
-                            System.out.println(cellsTF[r][c].getText());
                             cells[r][c].valid = true;
                             return;
                         }

@@ -2,5 +2,6 @@ bin
 .metadata
 .recommenders
 RemoteSystemsTempFiles
-
+.settings
+.classpath
 
