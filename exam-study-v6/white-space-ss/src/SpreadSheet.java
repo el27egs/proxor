@@ -1,6 +1,10 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.text.NumberFormat;
+
 import javax.swing.*;
+import javax.swing.text.NumberFormatter;
+
 import java.util.StringTokenizer;
 
 /* SpreadSheet implements an array of cells within a graphical
@@ -140,14 +144,15 @@ public class SpreadSheet extends JFrame {
     public String parseFormula(StringTokenizer tokens, int depth) 
             throws NumberFormatException {
         if (tokens.hasMoreTokens()) {
-            String tok = tokens.nextToken();
+            String tok = tokens.nextToken().trim();
             tok = evaluateToken(tok, depth);
+
             if (tok == null) return null;
             while (tokens.hasMoreTokens()) {
-                String tok2 = tokens.nextToken();
+                String tok2 = tokens.nextToken().trim();
                 if (tok2 == null) return null;
                 if (!tokens.hasMoreTokens()) return null;
-                String tok3 = tokens.nextToken();
+                String tok3 = tokens.nextToken().trim();
                 tok3 = evaluateToken(tok3, depth);
                 if (tok3 == null) return null;
                 if (tok2.equals("+")) {

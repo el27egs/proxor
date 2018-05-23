@@ -137,10 +137,15 @@ public class SpreadSheet extends JFrame {
     // formulas can have any number of tokens separated by operators, which
     //    can be *, +, /, or -. Operations are performed left to right, with
     //    no regard for operator precedence.
-    public String parseFormula(StringTokenizer tokens, int depth) 
-            throws NumberFormatException {
-        if (tokens.hasMoreTokens()) {
-            String tok = tokens.nextToken();
+    public String parseParentesis(StringTokenizer tokens, int depth, String tokActual) {
+    		Boolean openParentesis = true;
+        	while(openParentesis) {
+            String tok = tokActual.replace("(","");
+            if(tok.contains(")")) {
+            	tok = tok.replace(")", "");
+            	tok = evaluateToken(tok, depth);
+            	return tok;
+            }
             tok = evaluateToken(tok, depth);
             if (tok == null) return null;
             while (tokens.hasMoreTokens()) {
@@ -148,7 +153,48 @@ public class SpreadSheet extends JFrame {
                 if (tok2 == null) return null;
                 if (!tokens.hasMoreTokens()) return null;
                 String tok3 = tokens.nextToken();
+                if(tok3.contains(")")){
+                	tok3 = tok3.replace(")","");
+                	openParentesis = false;
+                }
                 tok3 = evaluateToken(tok3, depth);
+                if (tok3 == null) return null;
+                if (tok2.equals("+")) {
+                    tok = add(tok, tok3);
+                } else if (tok2.equals("*")) {
+                	tok = multiply(tok, tok3);
+                } else if (tok2.equals("/")) {
+                	tok = divide(tok, tok3);
+                } else if (tok2.equals("-")) {
+                	tok = subtract(tok, tok3);
+                } else return null; // invalid operator
+            }
+            return tok;
+        	}
+        	return null;
+
+    }
+    public String parseFormula(StringTokenizer tokens, int depth) 
+            throws NumberFormatException {
+        if (tokens.hasMoreTokens()) {
+            String tok = tokens.nextToken();
+            if(tok.contains("(")) {
+            	tok = parseParentesis(tokens, depth, tok);
+            }
+            else
+            	tok = evaluateToken(tok, depth);
+            
+            if (tok == null) return null;
+            while (tokens.hasMoreTokens()) {
+                String tok2 = tokens.nextToken();
+                if (tok2 == null) return null;
+                if (!tokens.hasMoreTokens()) return null;
+                String tok3 = tokens.nextToken();
+                if(tok3.contains("(")) {
+                	tok3 = parseParentesis(tokens, depth, tok3);
+                }
+                else
+                	tok3 = evaluateToken(tok3, depth);
                 if (tok3 == null) return null;
                 if (tok2.equals("+")) {
                     tok = add(tok, tok3);
@@ -177,6 +223,7 @@ public class SpreadSheet extends JFrame {
                 if (depth <= maxRows * maxCols) {
                     StringTokenizer tokens = 
                             new StringTokenizer(formula, "=+*/-", true);
+                   // System.out.println("tokens:");
                     if (tokens.hasMoreTokens() && 
                         (tokens.nextToken().equals("="))) {
                         String val = parseFormula(tokens, depth);
