@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.StringTokenizer;
+import java.util.*;
 
 /* SpreadSheet implements an array of cells within a graphical
  * user interface. Each cell is represented by a JTextField that
@@ -92,10 +93,6 @@ public class SpreadSheet extends JFrame {
     // parameter keeps track of the length of the dependency chain.
     // Returns a string if value is valid, otherwise null.
     public String evaluateToken(String tok, int depth) {
-    	//GASE exp-have-numbers-ss Adding this condition
-    	if (this.isNumeric(tok)) {
-    		return tok;
-    	}
         if (tok.length() >= 2 && tok.charAt(0) >= 'A' && 
             tok.charAt(0) < (char) ('A' + maxCols)) {
             int col = tok.charAt(0) - 'A';
@@ -132,13 +129,6 @@ public class SpreadSheet extends JFrame {
         return Double.toString(Double.parseDouble(x.trim()) - 
                                Double.parseDouble(y.trim()));
     }
-    //GASE - Method Added
-	private boolean isNumeric(String str) {
-		if (str == null) {
-			return false;
-		}
-		return str.matches("\\d+(\\.\\d+)?"); // match a number with optional decimal.
-	}
     
     // parse and evaluate formula after it has been broken into tokens
     // formulas are tokens containing either
@@ -152,14 +142,21 @@ public class SpreadSheet extends JFrame {
             throws NumberFormatException {
         if (tokens.hasMoreTokens()) {
             String tok = tokens.nextToken();
-            tok = evaluateToken(tok, depth);
+            Scanner scann = new Scanner(tok);
+            if(!scann.hasNextDouble()) {
+            	tok = evaluateToken(tok, depth);
+            }
             if (tok == null) return null;
             while (tokens.hasMoreTokens()) {
                 String tok2 = tokens.nextToken();
                 if (tok2 == null) return null;
                 if (!tokens.hasMoreTokens()) return null;
                 String tok3 = tokens.nextToken();
-                tok3 = evaluateToken(tok3, depth);
+                Scanner scann3 = new Scanner(tok3);
+                if(!scann3.hasNextDouble()) {
+                	tok3 = evaluateToken(tok3, depth);
+                }
+                scann3.close();
                 if (tok3 == null) return null;
                 if (tok2.equals("+")) {
                     tok = add(tok, tok3);
@@ -171,6 +168,7 @@ public class SpreadSheet extends JFrame {
                 	tok = subtract(tok, tok3);
                 } else return null; // invalid operator
             }
+            scann.close();
             return tok;
         }
         return null;

@@ -103,21 +103,21 @@ public class SpreadSheet extends JFrame {
                 if (cells[row][col].bottom) return null;
                 return cellsTF[row][col].getText();
             }
-        }else {
-        	if (this.isNumeric(tok)) {
-        		return tok;
-        	}
         }
         return null;
     }
     
-    //GASE - Method Added
-	private boolean isNumeric(String str) {
-		if (str == null) {
-			return false;
-		}
-		return str.matches("\\d+(\\.\\d+)?"); // match a number with optional decimal.
-	}
+    public Point obtienePosicion(String tok) {
+        if (tok.length() >= 2 && tok.charAt(0) >= 'A' && 
+            tok.charAt(0) < (char) ('A' + maxCols)) {
+            int col = tok.charAt(0) - 'A';
+            int row = Integer.parseInt(tok.substring(1)) - 1;
+            if (row >= 0 && row < maxRows) {
+            	return new Point(col,row);
+            }
+        }
+        return null;
+    }
 
     /* Functions to implement formula operations -- input/output are strings
      */
@@ -141,6 +141,41 @@ public class SpreadSheet extends JFrame {
                                Double.parseDouble(y.trim()));
     }
     
+    protected String avg(String x, String y) throws NumberFormatException {
+    	Point posUno = obtienePosicion(x);
+    	Point posDos = obtienePosicion(y);
+    	int posUnox = posUno.x;
+    	int posUnoy = posUno.y;
+    	int posDosx = posDos.x;
+    	int posDosy = posDos.y;
+    	int xMayor = 0, xMenor = 0, yMayor = 0, yMenor = 0;
+    	if(posUnox > posDosx) {
+    		xMayor = posUnox;
+    		xMenor = posDosx;
+    		}
+    	else {
+    		xMayor = posDosx;
+    		xMenor = posUnox;
+    	}
+    	if(posUnoy > posDosy) {
+    		yMayor = posUnoy;
+    		yMenor = posDosy;
+    	}
+    	else {
+    		yMayor = posDosy;
+    		yMenor = posUnoy;
+    	}
+    	double suma = 0;
+    	int cuantos = 0;
+    	for(int i=xMenor; i<=xMayor; i++) {
+    		for(int j=yMenor; j<=yMayor; j++) {
+    			suma += Double.parseDouble(getCellText(j,i));
+    			cuantos ++;
+    		}
+    	}
+        return Double.toString(suma/cuantos);
+    }
+    
     // parse and evaluate formula after it has been broken into tokens
     // formulas are tokens containing either
     // 1. references to cells of the form Lnn, where
@@ -153,14 +188,14 @@ public class SpreadSheet extends JFrame {
             throws NumberFormatException {
         if (tokens.hasMoreTokens()) {
             String tok = tokens.nextToken();
-            tok = evaluateToken(tok, depth);
+            //tok = evaluateToken(tok);
             if (tok == null) return null;
             while (tokens.hasMoreTokens()) {
                 String tok2 = tokens.nextToken();
                 if (tok2 == null) return null;
                 if (!tokens.hasMoreTokens()) return null;
                 String tok3 = tokens.nextToken();
-                tok3 = evaluateToken(tok3, depth);
+                //tok3 = evaluateToken(tok3, depth);
                 if (tok3 == null) return null;
                 if (tok2.equals("+")) {
                     tok = add(tok, tok3);
@@ -170,6 +205,8 @@ public class SpreadSheet extends JFrame {
                 	tok = divide(tok, tok3);
                 } else if (tok2.equals("-")) {
                 	tok = subtract(tok, tok3);
+                } else if (tok2.equals(":")) {
+                	tok = avg(tok, tok3);
                 } else return null; // invalid operator
             }
             return tok;
@@ -185,13 +222,10 @@ public class SpreadSheet extends JFrame {
     public void evaluate(int r, int c, int depth) {
         String formula = cells[r][c].formula;
         if (formula.length() > 0 && formula.charAt(0) == '=') {
-        	if (formula.startsWith("=AVG")) {
-        		formula = parseAVGFormula(formula);
-        	}
             try {
                 if (depth <= maxRows * maxCols) {
                     StringTokenizer tokens = 
-                            new StringTokenizer(formula, "=+*/-", true);
+                            new StringTokenizer(formula.replace("AVG(", "").replace(")", ""), "=+*/-:", true);
                     if (tokens.hasMoreTokens() && 
                         (tokens.nextToken().equals("="))) {
                         String val = parseFormula(tokens, depth);
@@ -212,91 +246,6 @@ public class SpreadSheet extends JFrame {
             cellsTF[r][c].setText(formula);
         }
     }
-
-    private String parseAVGFormula(String avgFormula) {
-      	
-    	int numCells = 1;
-    	
-    	if (avgFormula.indexOf(":") == -1) {
-    		return "";
-    	}
-    	
-    	StringBuffer buffer = new StringBuffer("=");
-    	
-    	avgFormula = avgFormula.substring("=AVG(".length(), avgFormula.length() - ")".length());
-    	String[] cells = avgFormula.split(":");
-    	
-    	String firstColumn = cells[0].substring(0, 1); 
-    	String secondColumn = cells[1].substring(0, 1);
-
-    	String firstRow = cells[0].substring(1); 
-    	String secondRow = cells[1].substring(1);
-
-    	if ( firstColumn.equals(secondColumn) ){
-    	
-    		if (firstRow.equals(secondRow)) {
-    			return buffer.append(firstColumn).append(firstRow).toString();
-    		}
-    		
-    		int init = Integer.parseInt(firstRow);
-    		int end = Integer.parseInt(secondRow);
-    		
-    	
-    		if (init > end ) {
-    			int tmp = init;
-    			init = end;
-    			end = tmp;
-    		}
-    		    	
-    		numCells = (end - init) + 1;
-    		
-    		for (int row = init; row <= end; row++) {
-    			buffer.append(firstColumn).append(row);
-    			
-    			if (row < end) {
-    				buffer.append("+");
-    			}
-    		}
-    		
-    		buffer.append("/").append(numCells);
-    		
-    		return buffer.toString();
-    		
-    	}else if ( firstRow.equals(secondRow) ){
-    	
-    		if (firstColumn.equals(secondColumn)) {
-    			return buffer.append(firstColumn).append(firstRow).toString();
-    		}
-
-    		int init = (char) (firstColumn.charAt(0));
-    		int end = (char) (secondColumn.charAt(0));
-
-    		if (init > end ) {
-    			int tmp = init;
-    			init = end;
-    			end = tmp;
-    		}
-    		
-    		numCells = (end - init) + 1;
-    		
-    		for (int column = init; column <= end; column++) {
-    			buffer.append((char)column).append(firstRow);
-    			
-    			if (column < end) {
-    				buffer.append("+");
-    			}
-    		}
-    		
-    		buffer.append("/").append(numCells);
-    		
-    		return buffer.toString();
-
-    	}else {
-    		System.out.println("Error de rangos...");
-    	}
-    		
-		return "";
-	}
     
     
     // evaluate every cell in the spreadsheet
