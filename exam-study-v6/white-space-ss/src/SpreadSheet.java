@@ -96,6 +96,7 @@ public class SpreadSheet extends JFrame {
     // parameter keeps track of the length of the dependency chain.
     // Returns a string if value is valid, otherwise null.
     public String evaluateToken(String tok, int depth) {
+    	tok = tok.trim();
         if (tok.length() >= 2 && tok.charAt(0) >= 'A' && 
             tok.charAt(0) < (char) ('A' + maxCols)) {
             int col = tok.charAt(0) - 'A';
@@ -144,15 +145,15 @@ public class SpreadSheet extends JFrame {
     public String parseFormula(StringTokenizer tokens, int depth) 
             throws NumberFormatException {
         if (tokens.hasMoreTokens()) {
-            String tok = tokens.nextToken().trim();
+            String tok = tokens.nextToken();//.trim();
             tok = evaluateToken(tok, depth);
 
             if (tok == null) return null;
             while (tokens.hasMoreTokens()) {
-                String tok2 = tokens.nextToken().trim();
+                String tok2 = tokens.nextToken();//.trim();
                 if (tok2 == null) return null;
                 if (!tokens.hasMoreTokens()) return null;
-                String tok3 = tokens.nextToken().trim();
+                String tok3 = tokens.nextToken();//.trim();
                 tok3 = evaluateToken(tok3, depth);
                 if (tok3 == null) return null;
                 if (tok2.equals("+")) {
