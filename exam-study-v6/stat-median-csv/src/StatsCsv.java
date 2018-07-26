@@ -5,6 +5,9 @@
 
 import java.io.IOException;
 
+import com.csvreader.CsvReader;
+import com.csvreader.CsvWriter;
+
 
 public class StatsCsv {
     
@@ -31,12 +34,30 @@ public class StatsCsv {
         // 
         // to be completed
     	//  Do not change the signature of this method.
+    	CsvWriter csvrW = new CsvWriter(outFile);
+    	for(int r=0; r<rowsUsed; r++) {
+    		for(int c=0; c<colsUsed; c++) {
+    			csvrW.write(sheet[r][c]);
+    		}
+    		csvrW.endRecord();
+    	}
+    	csvrW.close();
     }
 
     public void readSheet( ) throws IOException {
         // 
         // to be completed
     	//  Do not change the signature of this method.
+    	CsvReader csvR = new CsvReader(inFile);
+    	int r=0;
+    	while(csvR.readRecord()) {
+    		for(int c=0; c<csvR.getColumnCount(); c++) {
+    			sheet[r][c] = csvR.get(c);
+    			colsUsed = c+1;
+    		}
+    		r++;
+    		rowsUsed = r;
+    	}
     }
 
     public int getRows(){
